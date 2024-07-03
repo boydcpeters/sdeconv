@@ -203,18 +203,20 @@ class Spitfire(SDeconvFilter):
         Stop criterion. Stop gradient descent when the loss decrease less than precision
     pad: int/tuple
         Image padding to avoid Fourier artefacts
-
+    niter_loss_incr: int
+        The first number of iterations where an increase in loss is allowed.
     """
 
     def __init__(
         self,
         psf,
-        weight=0.6,
-        delta=1,
-        reg=0.995,
-        gradient_step=0.01,
-        precision=1e-7,
-        pad=0,
+        weight: float = 0.6,
+        delta: float = 1,
+        reg: float = 0.995,
+        gradient_step: float = 0.01,
+        precision: float = 1e-7,
+        pad: int = 0,
+        niter_loss_incr: int = 10,
     ):
         super().__init__()
         self.psf = psf
@@ -225,6 +227,7 @@ class Spitfire(SDeconvFilter):
         self.pad = pad
         self.niter_ = 0
         self.max_iter_ = 2500
+        self.niter_loss_incr_ = niter_loss_incr
         self.gradient_step_ = gradient_step
         self.loss_ = None
 
@@ -423,7 +426,7 @@ class Spitfire(SDeconvFilter):
                 deconv_image, self.delta, self.weight
             )
             print("iter:", self.niter_, " loss:", loss.item())
-            if loss > previous_loss:
+            if loss > previous_loss and self.niter_ > self.niter_loss_incr_:
                 break
             if abs(loss - previous_loss) < self.precision:
                 count_eq += 1
@@ -514,7 +517,7 @@ metadata = {
         "gradient_step": {
             "type": "float",
             "label": "Gradient Step",
-            "help": "Step for ADAM gradient descente optimization",
+            "help": "Step for ADAM gradient descent optimization",
             "default": 0.01,
             "advanced": True,
         },
